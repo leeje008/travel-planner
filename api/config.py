@@ -3,6 +3,7 @@
 pydantic-settings BaseSettings 기반 설정 클래스입니다.
 """
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -28,6 +29,17 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "DEBUG"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
+
+    @model_validator(mode="after")
+    def normalize_database_url(self) -> "Settings":
+        """Railway 등 외부 플랫폼이 제공하는 DB URL을 asyncpg 드라이버 형식으로 변환."""
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        self.DATABASE_URL = url
+        return self
 
 
 settings = Settings()

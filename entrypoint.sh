@@ -2,13 +2,14 @@
 set -e
 
 # DB 연결 대기
+# Railway는 postgresql:// 형식을 제공하므로 asyncpg/postgres:// 변환 처리
 echo "Waiting for database..."
 MAX_RETRIES=30
 RETRY=0
 until python -c "
 import psycopg2, os
-url = os.getenv('DATABASE_URL', 'postgresql+asyncpg://user:password@localhost:5432/travel_planner')
-sync_url = url.replace('+asyncpg', '').replace('postgresql://', 'postgresql://')
+url = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/travel_planner')
+sync_url = url.replace('+asyncpg', '').replace('postgres://', 'postgresql://')
 psycopg2.connect(sync_url)
 " 2>/dev/null; do
     RETRY=$((RETRY + 1))
